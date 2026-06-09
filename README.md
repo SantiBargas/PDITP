@@ -1,2 +1,23 @@
 # PDI_tp
-Trabajo practico integrador de procesamiento digital de imágenes
+Trabajo práctico integrador de procesamiento digital de imágenes.
+
+Sistema de segmentación, estimación de talla y clasificación de pescados del río Paraná.
+
+## Dataset
+
+El dataset **no está incluido en el repositorio**. Descargarlo desde:
+
+> https://huggingface.co/datasets/vapaau/autofish/tree/main
+
+Una vez descargado, colocar las imágenes en:
+
+```
+data/raw/
+```
+
+## Cómo ejecutar
+
+```bash
+cd codigo
+python main.py
+```

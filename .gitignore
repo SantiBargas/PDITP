@@ -1,0 +1,43 @@
+# Dataset — no subir imágenes ni archivos pesados, solo la estructura de carpetas
+data/**
+!data/**/
+!data/**/.gitkeep
+*.png
+*.jpg
+*.jpeg
+*.bmp
+*.tiff
+*.tif
+
+# Resultados generados
+resultados/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Modelos entrenados (pueden ser muy pesados)
+*.pt
+*.pth
+*.onnx
+*.weights
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
