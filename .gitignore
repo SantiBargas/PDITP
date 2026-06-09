@@ -1,5 +1,6 @@
 # Dataset — no subir al repositorio (descargar desde HuggingFace, ver README)
-data/
+data/*
+!data/.gitkeep
 
 # Resultados generados
 resultados/
