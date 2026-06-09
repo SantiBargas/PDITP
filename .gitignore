@@ -1,13 +1,13 @@
-# Dataset — no subir imágenes ni archivos pesados, solo la estructura de carpetas
-data/**
-!data/**/
-!data/**/.gitkeep
-*.png
-*.jpg
-*.jpeg
-*.bmp
-*.tiff
-*.tif
+# Dataset — ignorar archivos pesados, solo commitear estructura (.gitkeep)
+data/**/*.png
+data/**/*.jpg
+data/**/*.jpeg
+data/**/*.bmp
+data/**/*.tiff
+data/**/*.tif
+data/annotations.json
+data/metadata.csv
+data/README.md
 
 # Resultados generados
 resultados/
