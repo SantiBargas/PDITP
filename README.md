@@ -1,8 +1,7 @@
 # PDI_tp
 Trabajo práctico integrador de procesamiento digital de imágenes.
 
-Sistema de segmentación, estimación de talla y clasificación de pescados del río Paraná.
-
+Sistema de segmentación, estimación de talla y clasificación de pescados.
 ## Dataset
 
 El dataset **no está incluido en el repositorio**. Descargarlo desde:
