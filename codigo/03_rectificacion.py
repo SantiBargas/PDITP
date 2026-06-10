@@ -11,6 +11,7 @@ preprocesamiento = importlib.import_module("02_preprocesamiento")
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 LADO_CABEZA_CANONICO = "izquierda"  # todos los recortes finales quedan con la cabeza de este lado
+ORIENTACION_CANONICA = "abajo"  # todos los recortes finales quedan con la boca hacia abajo
 
 
 def calcular_transformacion(rect) -> tuple:
@@ -81,6 +82,27 @@ def unificar_cabeza(crop: np.ndarray, mascara: np.ndarray, lado_cabeza: str) -> 
     return crop, mascara
 
 
+def detectar_orientacion_vertical(mascara: np.ndarray) -> str:
+    """Estima si la punta del hocico apunta hacia arriba o abajo respecto al centro de la cabeza."""
+    _, ancho = mascara.shape[:2]
+    region_cabeza = mascara[:, :max(1, int(ancho * 0.2))]
+
+    ys, xs = np.nonzero(region_cabeza)
+    centro_y_cabeza = ys.mean()
+
+    x_punta = xs.min()
+    y_punta = ys[xs <= x_punta + 1].mean()
+
+    return "abajo" if y_punta > centro_y_cabeza else "arriba"
+
+
+def unificar_orientacion_vertical(crop: np.ndarray, mascara: np.ndarray, orientacion: str) -> tuple:
+    """Aplica espejo vertical si la boca no está del lado canónico."""
+    if orientacion != ORIENTACION_CANONICA:
+        return cv2.flip(crop, 0), cv2.flip(mascara, 0)
+    return crop, mascara
+
+
 def emparejar_con_anotaciones(rects: list, peces: list) -> list:
     """Asocia cada rect detectado con el pez anotado más cercano (por centro)."""
     centros_peces = []
@@ -119,11 +141,14 @@ def run(group_id: int = 1, image_id: int = 1, mostrar: bool = True, guardar: boo
         crop, mascara_crop = rectificar(imagen, mascara, rect)
         lado_cabeza = detectar_lado_cabeza(mascara_crop)
         crop, mascara_crop = unificar_cabeza(crop, mascara_crop, lado_cabeza)
+        orientacion = detectar_orientacion_vertical(mascara_crop)
+        crop, mascara_crop = unificar_orientacion_vertical(crop, mascara_crop, orientacion)
         resultados.append((crop, pez))
 
         print(
             f"  pez {i}: especie={pez['especie']:<14} "
-            f"side_up={pez['side_up']} cabeza_detectada={lado_cabeza:<9} -> "
+            f"side_up={pez['side_up']} cabeza_detectada={lado_cabeza:<9} "
+            f"orientacion_detectada={orientacion:<6} -> "
             f"tamaño={crop.shape[1]}x{crop.shape[0]}"
         )
 
