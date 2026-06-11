@@ -17,7 +17,7 @@ Materia: Procesamiento Digital de Imágenes | Entregable: artículo estilo congr
 06 Salida                → especie + medidas por individuo
 ```
 
-Prioridad actual: etapas 01-03. Las etapas 04-06 son próxima etapa / trabajo futuro.
+Prioridad actual: etapas 01-04 completas (preprocesamiento, rectificación y clasificación YOLO funcionando). Etapas 05-06 son próxima etapa / trabajo futuro.
 
 ## Estructura de carpetas
 
@@ -60,7 +60,7 @@ PDI_tp/
 - Python 3.x
 - OpenCV (`cv2`) — preprocesamiento, morfología, contornos
 - NumPy
-- Ultralytics YOLO — clasificación y (futuro) segmentación con solapamiento
+- Ultralytics YOLO (+ PyTorch/torchvision con CUDA) — clasificación y (futuro) segmentación con solapamiento
 - Jupyter notebooks para exploración
 
 ## Convenciones
@@ -76,9 +76,9 @@ PDI_tp/
 - [x] Descripción del problema y pipeline definido
 - [x] Script experimental de preprocesamiento (`pruebas/prueba4.py`): umbralización Otsu + morfología + bounding boxes rotados
 - [x] Dataset identificado: AutoFish, 6 clases, 1.500 imgs, anotaciones completas en `annotations.json`
-- [ ] Etapa 02 limpia en `codigo/02_preprocesamiento.py`
-- [ ] Etapa 03: rectificación de individuos
-- [ ] Entrenamiento YOLO (etapa 04)
+- [x] Etapa 02 limpia en `codigo/02_preprocesamiento.py`
+- [x] Etapa 03: rectificación de individuos
+- [x] Entrenamiento YOLO (etapa 04): YOLOv8n-cls sobre `data/yolo_dataset` (8081 recortes, 7 clases, train=group_01-20/val=group_21-25), 35 épocas (early stopping, mejor en época 25), top1_acc=0.973 — resultados en `resultados/clasificacion_yolov8n/`
 - [ ] Estimación de talla (etapa 05)
 
 ## Condiciones de captura de imagen
