@@ -104,40 +104,56 @@ def unificar_orientacion_vertical(crop: np.ndarray, mascara: np.ndarray, orienta
 
 
 def emparejar_con_anotaciones(rects: list, peces: list) -> list:
-    """Asocia cada rect detectado con el pez anotado más cercano (por centro)."""
-    centros_peces = []
-    for pez in peces:
-        x, y, w, h = pez["bbox"]
-        centros_peces.append((x + w / 2, y + h / 2, pez))
-
-    usados = set()
-    asignaciones = []
-    for rect in rects:
+    """Asocia cada rect detectado con el pez anotado más cercano (por centro), descartando
+    rects/peces sin una correspondencia razonable (segmentación imperfecta: blobs fragmentados
+    o peces no separados)."""
+    candidatos = []
+    for ri, rect in enumerate(rects):
         cx, cy = rect[0]
-        mejor_idx = min(
-            (i for i in range(len(centros_peces)) if i not in usados),
-            key=lambda i: (centros_peces[i][0] - cx) ** 2 + (centros_peces[i][1] - cy) ** 2,
-        )
-        usados.add(mejor_idx)
-        asignaciones.append(centros_peces[mejor_idx][2])
+        for pi, pez in enumerate(peces):
+            x, y, w, h = pez["bbox"]
+            pcx, pcy = x + w / 2, y + h / 2
+            dist2 = (pcx - cx) ** 2 + (pcy - cy) ** 2
+            umbral2 = (max(w, h) / 2) ** 2
+            if dist2 <= umbral2:
+                candidatos.append((dist2, ri, pi))
+
+    candidatos.sort(key=lambda c: c[0])
+
+    rects_usados, peces_usados = set(), set()
+    asignaciones = []
+    for _, ri, pi in candidatos:
+        if ri in rects_usados or pi in peces_usados:
+            continue
+        rects_usados.add(ri)
+        peces_usados.add(pi)
+        asignaciones.append((rects[ri], peces[pi]))
 
     return asignaciones
 
 
-def run(group_id: int = 1, image_id: int = 1, mostrar: bool = True, guardar: bool = True) -> list:
-    anotaciones = entrada.cargar_anotaciones()
+def run(
+    group_id: int = 1,
+    image_id: int = 1,
+    mostrar: bool = True,
+    guardar: bool = True,
+    verbose: bool = True,
+    anotaciones: dict | None = None,
+) -> list:
+    if anotaciones is None:
+        anotaciones = entrada.cargar_anotaciones()
     imagen, info = entrada.cargar_imagen(group_id, image_id, anotaciones)
 
     mascara = preprocesamiento.segmentar(imagen)
     rects = preprocesamiento.detectar_individuos(mascara)
-    peces = emparejar_con_anotaciones(rects, info["peces"])
+    pares = emparejar_con_anotaciones(rects, info["peces"])
 
     output_dir = DATA_DIR / "processed" / f"group_{group_id:02d}_{image_id:05d}"
     if guardar:
         output_dir.mkdir(parents=True, exist_ok=True)
 
     resultados = []
-    for i, (rect, pez) in enumerate(zip(rects, peces)):
+    for i, (rect, pez) in enumerate(pares):
         crop, mascara_crop = rectificar(imagen, mascara, rect)
         lado_cabeza = detectar_lado_cabeza(mascara_crop)
         crop, mascara_crop = unificar_cabeza(crop, mascara_crop, lado_cabeza)
@@ -145,12 +161,13 @@ def run(group_id: int = 1, image_id: int = 1, mostrar: bool = True, guardar: boo
         crop, mascara_crop = unificar_orientacion_vertical(crop, mascara_crop, orientacion)
         resultados.append((crop, pez))
 
-        print(
-            f"  pez {i}: especie={pez['especie']:<14} "
-            f"side_up={pez['side_up']} cabeza_detectada={lado_cabeza:<9} "
-            f"orientacion_detectada={orientacion:<6} -> "
-            f"tamaño={crop.shape[1]}x{crop.shape[0]}"
-        )
+        if verbose:
+            print(
+                f"  pez {i}: especie={pez['especie']:<14} "
+                f"side_up={pez['side_up']} cabeza_detectada={lado_cabeza:<9} "
+                f"orientacion_detectada={orientacion:<6} -> "
+                f"tamaño={crop.shape[1]}x{crop.shape[0]}"
+            )
 
         if guardar:
             path = output_dir / f"pez_{i}_{pez['especie']}.png"
