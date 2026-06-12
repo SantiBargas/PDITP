@@ -74,18 +74,49 @@ def run(group_id: int = 1, image_id: int = 1, mostrar: bool = True) -> tuple:
     print(f"Dimensiones: {info['width']}x{info['height']}")
     print(f"Cantidad de peces: {len(info['peces'])}")
     for pez in info["peces"]:
+        x, y, w, h = pez["bbox"]
         print(
             f"  - fish_id={pez['fish_id']:>4} "
             f"especie={pez['especie']:<14} "
             f"largo={pez['length']:.1f}cm "
-            f"side_up={pez['side_up']}"
+            f"side_up={pez['side_up']} "
+            f"bbox=(x={x:.0f}, y={y:.0f}, w={w:.0f}, h={h:.0f})"
         )
 
     if mostrar:
+        imagen_anotada = imagen.copy()
+        for pez in info["peces"]:
+            x, y, w, h = (int(v) for v in pez["bbox"])
+            cv2.rectangle(imagen_anotada, (x, y), (x + w, y + h), (0, 255, 0), 4)
+            etiqueta = f"{pez['fish_id']} {pez['especie']}"
+            cv2.putText(
+                imagen_anotada, etiqueta, (x, max(0, y - 10)),
+                cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 0), 3,
+            )
+
+        coords = {"x": 0, "y": 0}
+
+        def actualizar_mouse(event, x, y, flags, param):
+            coords["x"], coords["y"] = x, y
+
         cv2.namedWindow("Imagen original", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("Imagen original", 800, 600)
-        cv2.imshow("Imagen original", imagen)
-        cv2.waitKey(0)
+        cv2.setMouseCallback("Imagen original", actualizar_mouse)
+
+        while True:
+            frame = imagen_anotada.copy()
+            texto = f"x={coords['x']}, y={coords['y']}"
+            cv2.putText(
+                frame, texto, (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 3
+            )
+
+            cv2.imshow("Imagen original", frame)
+
+            if cv2.waitKey(30) != -1:
+                break
+            if cv2.getWindowProperty("Imagen original", cv2.WND_PROP_VISIBLE) < 1:
+                break
+
         cv2.destroyAllWindows()
 
     return imagen, info

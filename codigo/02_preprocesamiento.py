@@ -60,18 +60,42 @@ def run(group_id: int = 1, image_id: int = 1, mostrar: bool = True) -> tuple:
 
     print(f"Imagen: {path.relative_to(DATA_DIR)}")
     print(f"Individuos detectados: {len(rects)}")
+    for i, rect in enumerate(rects):
+        (cx, cy), (w, h), angulo = rect
+        print(
+            f"  - individuo {i}: centro=(cx={cx:.0f}, cy={cy:.0f}) "
+            f"tamaño=({w:.0f}x{h:.0f}) angulo={angulo:.1f}"
+        )
 
     if mostrar:
         bboxes = dibujar_rects(imagen, rects)
+
+        coords = {"x": 0, "y": 0}
+
+        def actualizar_mouse(event, x, y, flags, param):
+            coords["x"], coords["y"] = x, y
 
         cv2.namedWindow("Mascara", cv2.WINDOW_NORMAL)
         cv2.namedWindow("Individuos detectados", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("Mascara", 800, 600)
         cv2.resizeWindow("Individuos detectados", 800, 600)
+        cv2.setMouseCallback("Individuos detectados", actualizar_mouse)
 
-        cv2.imshow("Mascara", mascara)
-        cv2.imshow("Individuos detectados", bboxes)
-        cv2.waitKey(0)
+        while True:
+            frame = bboxes.copy()
+            texto = f"x={coords['x']}, y={coords['y']}"
+            cv2.putText(
+                frame, texto, (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 3
+            )
+
+            cv2.imshow("Mascara", mascara)
+            cv2.imshow("Individuos detectados", frame)
+
+            if cv2.waitKey(30) != -1:
+                break
+            if cv2.getWindowProperty("Individuos detectados", cv2.WND_PROP_VISIBLE) < 1:
+                break
+
         cv2.destroyAllWindows()
 
     return imagen, rects
