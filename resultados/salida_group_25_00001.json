@@ -1,0 +1,82 @@
+[
+  {
+    "fish_id": 92,
+    "especie_real": "cod",
+    "especie_predicha": "cod",
+    "confianza": 1.0,
+    "largo_px": 813,
+    "ancho_px": 160
+  },
+  {
+    "fish_id": 86,
+    "especie_real": "cod",
+    "especie_predicha": "cod",
+    "confianza": 1.0,
+    "largo_px": 725,
+    "ancho_px": 148
+  },
+  {
+    "fish_id": 117,
+    "especie_real": "haddock",
+    "especie_predicha": "haddock",
+    "confianza": 1.0,
+    "largo_px": 774,
+    "ancho_px": 211
+  },
+  {
+    "fish_id": 89,
+    "especie_real": "cod",
+    "especie_predicha": "cod",
+    "confianza": 1.0,
+    "largo_px": 626,
+    "ancho_px": 117
+  },
+  {
+    "fish_id": 236,
+    "especie_real": "hake",
+    "especie_predicha": "hake",
+    "confianza": 1.0,
+    "largo_px": 1069,
+    "ancho_px": 192
+  },
+  {
+    "fish_id": 387,
+    "especie_real": "whiting",
+    "especie_predicha": "whiting",
+    "confianza": 1.0,
+    "largo_px": 899,
+    "ancho_px": 185
+  },
+  {
+    "fish_id": 99,
+    "especie_real": "cod",
+    "especie_predicha": "cod",
+    "confianza": 1.0,
+    "largo_px": 752,
+    "ancho_px": 223
+  },
+  {
+    "fish_id": 83,
+    "especie_real": "cod",
+    "especie_predicha": "cod",
+    "confianza": 0.999,
+    "largo_px": 622,
+    "ancho_px": 169
+  },
+  {
+    "fish_id": 392,
+    "especie_real": "whiting",
+    "especie_predicha": "whiting",
+    "confianza": 0.985,
+    "largo_px": 965,
+    "ancho_px": 560
+  },
+  {
+    "fish_id": 381,
+    "especie_real": "whiting",
+    "especie_predicha": "whiting",
+    "confianza": 1.0,
+    "largo_px": 1018,
+    "ancho_px": 305
+  }
+]
