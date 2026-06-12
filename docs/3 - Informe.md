@@ -29,6 +29,83 @@ Cantidad de peces: 8
 
   esto nos va a servir para la etapa de entrenamiento y procesamiento
 
+### Estructura de annotations.json
+
+El archivo tiene 3 claves principales:
+
+```json
+{
+  "images": [...],       // 1500 entradas, una por imagen
+  "annotations": [...],  // 18158 entradas, una por pez
+  "categories": [...]    // 7 especies
+}
+```
+
+**images** — info de cada foto:
+```json
+{
+  "height": 2056,
+  "width": 2464,
+  "id": 1,
+  "file_name": "group_01/00001.png",
+  "group": 1
+}
+```
+- `id`: identificador interno de la imagen (las anotaciones apuntan a este id)
+- `file_name`: ruta relativa dentro de data/
+- `width`/`height`: tamaño de la foto en píxeles
+
+**annotations** — info de cada pez:
+```json
+{
+  "iscrowd": 0,
+  "image_id": 1,
+  "bbox": [381.0, 1123.0, 822.0, 378.0],
+  "segmentation": [...],
+  "category_id": 0,
+  "length": 35.5,
+  "fish_id": 316,
+  "side_up": "R",
+  "id": 1,
+  "area": 92164
+}
+```
+- `image_id`: a qué imagen pertenece este pez (matchea con images[i]["id"])
+- `bbox = [x, y, w, h]`: caja delimitadora del pez en píxeles de la imagen original (x,y = esquina superior izquierda; w,h = ancho/alto)
+- `category_id`: número de especie (se traduce con categories)
+- `length`: largo real del pez en cm (ground truth)
+- `fish_id`: id único del pez (se repite en distintas fotos del mismo individuo)
+- `side_up`: qué lado del pez está hacia arriba en la foto (L/R)
+- `segmentation`: máscara de segmentación del pez (polígono)
+
+**categories** — diccionario de especies:
+```json
+[
+  {"id": 0, "name": "horse_mackerel"},
+  {"id": 1, "name": "whiting"},
+  {"id": 2, "name": "haddock"},
+  {"id": 3, "name": "cod"},
+  {"id": 4, "name": "hake"},
+  {"id": 5, "name": "saithe"},
+  {"id": 6, "name": "other"}
+]
+```
+
+### Dónde se usa esto en el código
+
+**01_entrada.py → cargar_anotaciones()**: recorre images y crea un diccionario indice indexado por image_id, con file_name, width, height, group y una lista vacía peces. Recorre annotations y, para cada pez, lo agrega a indice[ann["image_id"]]["peces"] con: fish_id, bbox (el [x,y,w,h]), segmentation, length, category_id, especie (traducido con CATEGORIAS), side_up.
+
+**01_entrada.py → cargar_imagen()**: busca en indice la entrada cuyo file_name sea group_XX/000NN.png y devuelve (imagen, info), donde info["peces"] es la lista de peces de esa foto, cada uno con su bbox.
+
+**03_rectificacion.py → emparejar_con_anotaciones()**: acá es donde se usa el bbox = [x,y,w,h] de cada pez:
+```python
+x, y, w, h = pez["bbox"]
+pcx, pcy = x + w / 2, y + h / 2
+```
+Calcula el centro del bbox (pcx, pcy) y lo compara con el centro (cx, cy) del rect que detectó la etapa 02 (cv2.minAreaRect), para encontrar qué blob detectado corresponde a qué pez anotado. Si la distancia entre ambos centros es menor a un umbral (max(w,h)/2 al cuadrado), los asocia. Si no, los descarta (segmentación imperfecta).
+
+Para chequear un caso puntual (por ejemplo el pez fish_id=316, bbox=[381, 1123, 822, 378] de group_01/00001.png), se puede correr 01_entrada.run(group_id=1, image_id=1) y comparar esos valores contra lo que imprime, o correr 03_rectificacion.run(group_id=1, image_id=1, verbose=True) y ver con qué rect detectado quedó emparejado ese pez.
+
 ## 02_preprocesamiento.py :
 a partir de la imagen cruda (toda la cinta con varios peces), separa el fondo y detecta dónde está cada pez individual — sin recortar todavía, solo ubicándolos.
 Sin esto, el clasificador (etapa 04) recibiría la foto completa con 8 peces mezclados — no podría asignar una especie por pez ni medir cada uno por separado. Esta etapa es el primer paso para aislar cada individuo, que la etapa 03 va a recortar y enderezar usando estos rects.
