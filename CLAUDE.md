@@ -78,7 +78,12 @@ PDI_tp/
 - [x] Dataset identificado: AutoFish, 6 clases, 1.500 imgs, anotaciones completas en `annotations.json`
 - [x] Etapa 02 limpia en `codigo/02_preprocesamiento.py`
 - [x] Etapa 03: rectificación de individuos
-- [x] Entrenamiento YOLO (etapa 04): YOLOv8n-cls sobre `data/yolo_dataset` (8081 recortes, 7 clases, train=group_01-20/val=group_21-25), 35 épocas (early stopping, mejor en época 25), top1_acc=0.973 — resultados en `resultados/clasificacion_yolov8n/`
+- [x] Entrenamiento YOLO (etapa 04, v1): YOLOv8n-cls sobre `data/yolo_dataset` (8081 recortes, 7 clases, train=group_01-20/val=group_21-25), 35 épocas (early stopping, mejor en época 25), top1_acc=0.973 — resultados en `resultados/clasificacion_yolov8n/`
+- [ ] Etapa 04 (v2, post reunión 12/06/2026): split 80/20 en 3 partes — train=group_01-16 (64%), val=group_17-20 (16%, monitoreo/early stopping), test=group_21-25 (20%, ciego, evaluación final) — pendiente regenerar dataset y reentrenar
+- [ ] Etapa 04 (v2): data augmentation configurada en `entrenar()` (hsv_h/s/v, erasing, flipud=0.5, fliplr=0 — ver justificación en código) — pendiente correr y documentar en informe
+- [ ] Etapa 04 (v2): `evaluar()` sobre el test set ciego (precision/recall/mAP, matriz de confusión) — pendiente correr tras reentrenar
+- [ ] Medir tasa de error de orientación de la etapa 03 (comparar `side_up` esperado vs. detectado) para documentar en el informe
+- [ ] Informe: sección de limitaciones (confusión pez/fondo con panza plateada, condiciones de captura) y mejoras propuestas (fondo verde para INALI)
 - [ ] Estimación de talla (etapa 05)
 
 ## Condiciones de captura de imagen

@@ -1,140 +1,62 @@
-import cv2
-import numpy as np
+# Pipeline completo: 01 (entrada) -> 06 (salida estructurada)
+# Corre todas las etapas de punta a punta, regenerando dataset, modelo y resultados.
+
+import importlib
+import sys
 from pathlib import Path
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
-MIN_CONTOUR_AREA = 25_000
-MORPHOLOGY_KERNEL_SIZE = (35, 35)
-OUTPUT_DIR = DATA_DIR / "fish_crops"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "pruebas"))
+
+entrada = importlib.import_module("01_entrada")
+rectificacion = importlib.import_module("03_rectificacion")
+clasificacion = importlib.import_module("04_clasificacion")
+talla = importlib.import_module("05_estimacion_talla")
+salida = importlib.import_module("06_salida")
+figuras = importlib.import_module("figuras_informe")
+
+# Imagen de demo para las etapas 01-03 y 05-06 (group_25 = parte del test ciego,
+# no vista durante el entrenamiento de la etapa 04)
+GROUP_ID = 25
+IMAGE_ID = 1
 
 
-def load_image(path: str = "group_01/00003.png") -> np.ndarray:
-    full_path = DATA_DIR / path
-    image = cv2.imread(str(full_path), cv2.IMREAD_COLOR)
-    if image is None:
-        raise FileNotFoundError(f"No se encontró la imagen: {full_path}")
-    return image
+def main() -> None:
+    print("=== Etapa 01: carga de imagen y anotaciones ===")
+    anotaciones = entrada.cargar_anotaciones()
+    entrada.run(group_id=GROUP_ID, image_id=IMAGE_ID, mostrar=False)
 
-
-def build_binary_mask(image: np.ndarray) -> np.ndarray:
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    blurred = cv2.GaussianBlur(gray, (7, 7), 0)
-
-    _, mask = cv2.threshold(
-        blurred,
-        0,
-        255,
-        cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU,
+    print("\n=== Etapas 02-03: segmentación y rectificación de individuos ===")
+    resultados_rect = rectificacion.run(
+        group_id=GROUP_ID,
+        image_id=IMAGE_ID,
+        mostrar=False,
+        guardar=True,
+        verbose=True,
+        anotaciones=anotaciones,
     )
 
-    kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, MORPHOLOGY_KERNEL_SIZE)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-    return mask
+    print("\n=== Etapa 04: clasificación (regenerar dataset + entrenar + evaluar) ===")
+    clasificacion.generar_dataset()
+    clasificacion.entrenar()
+    _, carpeta_test = clasificacion.evaluar()
 
+    print("\n=== Etapa 04: inferencia sobre los individuos de la imagen de demo ===")
+    crops = [crop for crop, _ in resultados_rect]
+    predicciones = clasificacion.predecir(crops)
 
-def find_fish_rectangles(mask: np.ndarray) -> list:
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    print("\n=== Etapa 05: estimación de talla (en píxeles) ===")
+    medidas = [talla.estimar(crop) for crop in crops]
 
-    rects = []
-    for contour in contours:
-        area = cv2.contourArea(contour)
-        if area < MIN_CONTOUR_AREA:
-            continue
+    print("\n=== Etapa 06: salida estructurada ===")
+    salida.generar(resultados_rect, predicciones, medidas, group_id=GROUP_ID, image_id=IMAGE_ID)
 
-        rect = cv2.minAreaRect(contour)
-        rects.append((contour, rect, area))
-
-    return rects
-
-
-def draw_bounding_boxes(image: np.ndarray, rects: list) -> np.ndarray:
-    result = image.copy()
-
-    for _, rect, _ in rects:
-        box = np.intp(cv2.boxPoints(rect))
-        cv2.drawContours(result, [box], 0, (0, 0, 255), 2)
-
-    return result
-
-
-def compute_warp_matrix(rect) -> tuple:
-    box = np.intp(cv2.boxPoints(rect)).astype(np.float32)
-
-    side_a = np.linalg.norm(box[1] - box[0])
-    side_b = np.linalg.norm(box[2] - box[1])
-
-    if side_a >= side_b:
-        long_side = int(round(side_a))
-        short_side = int(round(side_b))
-        dst_pts = np.array(
-            [
-                [0, short_side - 1],
-                [long_side - 1, short_side - 1],
-                [long_side - 1, 0],
-                [0, 0],
-            ],
-            dtype=np.float32,
-        )
-    else:
-        long_side = int(round(side_b))
-        short_side = int(round(side_a))
-        dst_pts = np.array(
-            [
-                [0, 0],
-                [0, short_side - 1],
-                [long_side - 1, short_side - 1],
-                [long_side - 1, 0],
-            ],
-            dtype=np.float32,
-        )
-
-    transform = cv2.getPerspectiveTransform(box, dst_pts)
-    return transform, (long_side, short_side)
-
-
-def save_fish_crops( group_id: int, image_id: int, image: np.ndarray, rects: list, output_dir: Path = OUTPUT_DIR) -> list:
-    output_dir.mkdir(exist_ok=True)
-    saved_paths = []
-
-    for index, (_, rect, _) in enumerate(rects):
-        transform, (width, height) = compute_warp_matrix(rect)
-        warped = cv2.warpPerspective(image, transform, (width, height))
-
-        output_path = output_dir / f"pez_{group_id}_{image_id}_{index}.png"
-        cv2.imwrite(str(output_path), warped)
-        saved_paths.append(output_path)
-        print(f"Guardado: {output_path} (ancho={width}, alto={height})")
-
-    return saved_paths
-
-
-def show_results(mask: np.ndarray, bounding_boxes: np.ndarray) -> None:
-    cv2.namedWindow("Máscara", cv2.WINDOW_NORMAL)
-    cv2.namedWindow("Bounding Boxes", cv2.WINDOW_NORMAL)
-
-    cv2.resizeWindow("Máscara", 800, 600)
-    cv2.resizeWindow("Bounding Boxes", 800, 600)
-
-    cv2.imshow("Máscara", mask)
-    cv2.imshow("Bounding Boxes", bounding_boxes)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-
-def main(group_id: int, image_id: int, show: bool = False) -> None:
-    path = f"group_{group_id:02d}/{image_id:05d}.png"
-    image = load_image(path)
-    mask = build_binary_mask(image)
-    rects = find_fish_rectangles(mask)
-    bounding_boxes = draw_bounding_boxes(image, rects)
-    save_fish_crops(group_id, image_id, image, rects)
-    if show:
-        show_results(mask, bounding_boxes)
+    print("\n=== Figuras para el informe ===")
+    figuras.figura_pipeline(group_id=GROUP_ID, image_id=IMAGE_ID)
+    figuras.figura_curvas_entrenamiento()
+    figuras.figura_matriz_confusion(out_dir=carpeta_test)
+    figuras.figura_predicciones(out_dir=carpeta_test)
+    print(f"Figuras de esta evaluación en {carpeta_test}")
 
 
 if __name__ == "__main__":
-    for group_id in range(1, 25+1):
-        for image_id in range(1, 40+1):
-            main(group_id=group_id, image_id=image_id)
-
+    main()

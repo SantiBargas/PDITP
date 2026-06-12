@@ -172,3 +172,43 @@ python -c "import importlib; m = importlib.import_module('04_clasificacion'); m.
 Al archivo 04_clasificacion.py le pasamos el parametro patience = 10 a modelo.train()
 Esto quiere decir que si durante 10 epocas seguidas no nota mejoras, corta el entrenamiento
 Por el momento esta en 25 epocas
+
+## Reunión 12/06/2026 — cambios a partir del feedback del profe
+
+El profe validó el enfoque general (segmentación + rectificación propias, no depender de los bboxes precalculados de annotations.json). Pidió agregar 3 cosas: data augmentation justificada, un split train/val/test correcto (test 100% ciego), y documentar limitaciones/mejoras.
+
+### Split del dataset (v2)
+
+Antes: train=group_01-20 (80%), val=group_21-25 (20%) — pero ese "val" se usaba para el early stopping, o sea que influía en el entrenamiento. No era un test ciego.
+
+Ahora, dentro de 04_clasificacion.py, el split queda así (sigue siendo 80/20 en total):
+
+| Conjunto | Grupos | % | Para qué |
+|---|---|---|---|
+| train | group_01 a group_16 | 64% | ajusta los pesos del modelo |
+| val | group_17 a group_20 | 16% | monitoreo época a época / early stopping (sigue siendo parte del 80%) |
+| test | group_21 a group_25 | 20% | ciego — no se usa para nada durante el entrenamiento, se evalúa una sola vez al final |
+
+`generar_dataset()` ahora borra `data/yolo_dataset` y lo regenera con estas 3 carpetas (train/val/test).
+
+### Data augmentation (entrenar())
+
+Se agregaron parámetros nativos de Ultralytics a `entrenar()`, cada uno justificado para este proyecto:
+
+| Augmentación | Parámetro | Valor | Justificación |
+|---|---|---|---|
+| Brillo/contraste | `hsv_v` | 0.4 | luz variable según el momento del día en el desembarco |
+| Variación de color | `hsv_h`, `hsv_s` | 0.015 / 0.7 | variaciones naturales de coloración entre ejemplares de la misma especie |
+| Recorte parcial (occlusion) | `erasing` | 0.4 | un pez puede estar parcialmente fuera de cuadro o tapado |
+| Flip vertical | `flipud` | 0.5 | la etapa 03 deja ~1 de cada 10 peces "boca arriba" por error de orientación — entrenar con flip vertical hace al modelo robusto a ese error |
+| Flip horizontal | `fliplr` | 0 (desactivado) | la etapa 03 ya deja todos los peces con la cabeza a la izquierda (orientación canónica). Activar fliplr generaría peces con cabeza a la derecha, algo que nunca va a pasar en producción — contradiría la rectificación |
+
+### Evaluación ciega (evaluar())
+
+Nueva función `evaluar()` en 04_clasificacion.py: carga `best.pt` y corre `modelo.val(data=..., split="test")` sobre el 20% de test (group_21-25), que no participó ni del entrenamiento ni del early stopping. Resultados en `resultados/evaluacion_test/`.
+
+### Pendiente para el informe
+
+- Medir la tasa de error de orientación de la etapa 03 (comparar `side_up` esperado vs. lado/orientación detectado)
+- Sección de limitaciones: confusión pez/fondo con panza plateada sobre fondo claro de la cinta
+- Mejora propuesta: usar fondo de color verde (ningún pez tiene ese color) para el dataset propio de INALI, mejora el contraste para la segmentación
