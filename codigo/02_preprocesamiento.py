@@ -10,16 +10,34 @@ DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 MIN_CONTOUR_AREA = 25_000
 MAX_CONTOUR_AREA = 150_000
 MORPHOLOGY_KERNEL_SIZE = (35, 35)
+BORDE_MUESTRA_PX = 30
+
+
+def _color_fondo(imagen: np.ndarray) -> np.ndarray:
+    """Estima el color de fondo muestreando el borde de la imagen (BGR)."""
+    borde = BORDE_MUESTRA_PX
+    franjas = np.concatenate([
+        imagen[:borde, :].reshape(-1, 3),
+        imagen[-borde:, :].reshape(-1, 3),
+        imagen[:, :borde].reshape(-1, 3),
+        imagen[:, -borde:].reshape(-1, 3),
+    ])
+    return np.median(franjas, axis=0)
 
 
 def segmentar(imagen: np.ndarray) -> np.ndarray:
-    """Separa fondo de individuos: escala de grises + Otsu + morfología."""
-    gris = cv2.cvtColor(imagen, cv2.COLOR_BGR2GRAY)
-    suavizada = cv2.GaussianBlur(gris, (7, 7), 0)
+    """Separa fondo de individuos por distancia de color al fondo + Otsu + morfología.
 
-    _, mascara = cv2.threshold(
-        suavizada, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
-    )
+    El color de fondo se estima muestreando el borde de la imagen, por lo que
+    funciona tanto con el fondo claro de AutoFish como con fondos de otro
+    color (p. ej. verde), siempre que sea homogéneo y visible en los bordes.
+    """
+    suavizada = cv2.GaussianBlur(imagen, (7, 7), 0)
+    color_fondo = _color_fondo(suavizada)
+    distancia = np.linalg.norm(suavizada.astype(np.float32) - color_fondo, axis=2)
+    distancia_8u = cv2.normalize(distancia, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+
+    _, mascara = cv2.threshold(distancia_8u, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
     kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, MORPHOLOGY_KERNEL_SIZE)
     mascara = cv2.morphologyEx(mascara, cv2.MORPH_OPEN, kernel)

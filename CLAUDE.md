@@ -82,7 +82,6 @@ PDI_tp/
 - [ ] Etapa 04 (v2, post reunión 12/06/2026): split 80/20 en 3 partes — train=group_01-16 (64%), val=group_17-20 (16%, monitoreo/early stopping), test=group_21-25 (20%, ciego, evaluación final) — pendiente regenerar dataset y reentrenar
 - [ ] Etapa 04 (v2): data augmentation configurada en `entrenar()` (hsv_h/s/v, erasing, flipud=0.5, fliplr=0 — ver justificación en código) — pendiente correr y documentar en informe
 - [ ] Etapa 04 (v2): `evaluar()` sobre el test set ciego (precision/recall/mAP, matriz de confusión) — pendiente correr tras reentrenar
-- [ ] Medir tasa de error de orientación de la etapa 03 (comparar `side_up` esperado vs. detectado) para documentar en el informe
 - [ ] Informe: sección de limitaciones (confusión pez/fondo con panza plateada, condiciones de captura) y mejoras propuestas (fondo verde para INALI)
 - [ ] Estimación de talla (etapa 05)
 
