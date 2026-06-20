@@ -1,7 +1,7 @@
 task: classify
 mode: train
 model: yolov8n-cls.pt
-data: C:\Users\santi\Documents\PDI_tp\data\yolo_dataset
+data: D:\tp\data\yolo_dataset
 epochs: 50
 time: null
 patience: 10
@@ -12,7 +12,7 @@ save_period: -1
 cache: false
 device: null
 workers: 8
-project: C:\Users\santi\Documents\PDI_tp\resultados
+project: D:\tp\resultados
 name: clasificacion_yolov8n
 exist_ok: true
 pretrained: true
@@ -107,4 +107,4 @@ auto_augment: randaugment
 erasing: 0.4
 cfg: null
 tracker: botsort.yaml
-save_dir: C:\Users\santi\Documents\PDI_tp\resultados\clasificacion_yolov8n
+save_dir: D:\tp\resultados\clasificacion_yolov8n
