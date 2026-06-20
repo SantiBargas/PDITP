@@ -8,6 +8,7 @@ import numpy as np
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 MIN_CONTOUR_AREA = 25_000
+MAX_CONTOUR_AREA = 150_000
 MORPHOLOGY_KERNEL_SIZE = (35, 35)
 
 
@@ -33,7 +34,7 @@ def detectar_individuos(mascara: np.ndarray) -> list:
     rects = []
     for contorno in contornos:
         area = cv2.contourArea(contorno)
-        if area < MIN_CONTOUR_AREA:
+        if area < MIN_CONTOUR_AREA or area > MAX_CONTOUR_AREA:
             continue
         rects.append(cv2.minAreaRect(contorno))
 
@@ -45,6 +46,13 @@ def dibujar_rects(imagen: np.ndarray, rects: list) -> np.ndarray:
     resultado = imagen.copy()
     for rect in rects:
         box = np.intp(cv2.boxPoints(rect))
+        largo = max(np.linalg.norm(box[0]-box[1], 2), np.linalg.norm(box[0]-box[2], 2)) * (100/2048) #cm/pixel        
+        cv2.putText(resultado, 
+            f"{largo:2.2f}cm", 
+            (int(rect[0][0]), int(rect[0][1])),
+            cv2.FONT_HERSHEY_SIMPLEX, 2.5, (0, 255, 0), 4
+        )
+
         cv2.drawContours(resultado, [box], 0, (0, 0, 255), 3)
     return resultado
 
@@ -102,4 +110,6 @@ def run(group_id: int = 1, image_id: int = 1, mostrar: bool = True) -> tuple:
 
 
 if __name__ == "__main__":
-    run()
+    for group_id in range(1, 6):
+        for image_id in range(1, 30):
+            run(group_id=group_id, image_id=image_id, mostrar=True)

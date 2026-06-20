@@ -17,14 +17,13 @@ def generar(resultados_rect: list, predicciones: list, medidas: list, group_id: 
             "especie_real": pez["especie"],
             "especie_predicha": pred["especie"],
             "confianza": round(pred["confianza"], 3),
-            "largo_px": medida["largo_px"],
-            "ancho_px": medida["ancho_px"],
+            "largo": medida["largo"]
         }
         salida.append(item)
         print(
             f"  pez {item['fish_id']:>4}: real={item['especie_real']:<14} "
             f"predicha={item['especie_predicha']:<14} (conf={item['confianza']}) "
-            f"largo={item['largo_px']}px ancho={item['ancho_px']}px"
+            f"largo={item['largo']}cm"
         )
 
     RESULTADOS_DIR.mkdir(parents=True, exist_ok=True)
