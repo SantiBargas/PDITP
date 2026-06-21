@@ -7,9 +7,9 @@ import numpy as np
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
-MIN_CONTOUR_AREA = 25_000
+MIN_CONTOUR_AREA = 10_000
 MAX_CONTOUR_AREA = 150_000
-MORPHOLOGY_KERNEL_SIZE = (35, 35)
+MORPHOLOGY_KERNEL_SIZE = (21, 21)
 BORDE_MUESTRA_PX = 30
 
 

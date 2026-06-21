@@ -2,7 +2,7 @@ task: classify
 mode: train
 model: yolov8n-cls.pt
 data: C:\Users\santi\Documents\PDI_tp\data\yolo_dataset
-epochs: 50
+epochs: 40
 time: null
 patience: 10
 batch: 64
