@@ -168,8 +168,7 @@ def figura_matriz_confusion(out_dir: Path | None = None) -> None:
     print(f"-> {out}")
 
 
-def figura_curvas_entrenamiento() -> None:
-    """Curvas de loss y accuracy (top1) de entrenamiento/validación por época."""
+def _leer_resultados_entrenamiento() -> tuple:
     csv_path = RESULTADOS_DIR / "clasificacion_yolov8n" / "results.csv"
     epocas, train_loss, val_loss, val_top1 = [], [], [], []
     with open(csv_path) as f:
@@ -178,6 +177,51 @@ def figura_curvas_entrenamiento() -> None:
             train_loss.append(float(fila["train/loss"]))
             val_loss.append(float(fila["val/loss"]))
             val_top1.append(float(fila["metrics/accuracy_top1"]))
+    return epocas, train_loss, val_loss, val_top1
+
+
+def figura_perdida_entrenamiento() -> None:
+    """Curva de loss (train/val) por época."""
+    epocas, train_loss, val_loss, _ = _leer_resultados_entrenamiento()
+
+    fig, ax = plt.subplots(figsize=(6, 4.5))
+    ax.plot(epocas, train_loss, label="train loss")
+    ax.plot(epocas, val_loss, label="val loss")
+    ax.set_xlabel("Época")
+    ax.set_ylabel("Loss")
+    ax.set_title("Pérdida durante el entrenamiento")
+    ax.legend()
+
+    fig.tight_layout()
+    FIGURAS_DIR.mkdir(parents=True, exist_ok=True)
+    out = FIGURAS_DIR / "perdida_entrenamiento.png"
+    fig.savefig(out, dpi=120)
+    plt.close(fig)
+    print(f"-> {out}")
+
+
+def figura_accuracy_entrenamiento() -> None:
+    """Curva de accuracy (top1) de validación por época."""
+    epocas, _, _, val_top1 = _leer_resultados_entrenamiento()
+
+    fig, ax = plt.subplots(figsize=(6, 4.5))
+    ax.plot(epocas, val_top1, color="tab:green")
+    ax.set_xlabel("Época")
+    ax.set_ylabel("Accuracy (top1)")
+    ax.set_ylim(0, 1)
+    ax.set_title("Accuracy de validación por época")
+
+    fig.tight_layout()
+    FIGURAS_DIR.mkdir(parents=True, exist_ok=True)
+    out = FIGURAS_DIR / "accuracy_entrenamiento.png"
+    fig.savefig(out, dpi=120)
+    plt.close(fig)
+    print(f"-> {out}")
+
+
+def figura_curvas_entrenamiento() -> None:
+    """Curvas de loss y accuracy (top1) de entrenamiento/validación por época."""
+    epocas, train_loss, val_loss, val_top1 = _leer_resultados_entrenamiento()
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4.5))
 

@@ -7,8 +7,8 @@ import numpy as np
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
-MIN_CONTOUR_AREA = 10_000
-MAX_CONTOUR_AREA = 150_000
+MIN_CONTOUR_AREA_FRAC = 10_000 / (2464 * 2056)    # ~0.197% del área total de la imagen
+MAX_CONTOUR_AREA_FRAC = 150_000 / (2464 * 2056)   # ~2.961% del área total de la imagen
 MORPHOLOGY_KERNEL_SIZE = (21, 21)
 BORDE_MUESTRA_PX = 30
 
@@ -46,13 +46,22 @@ def segmentar(imagen: np.ndarray) -> np.ndarray:
 
 
 def detectar_individuos(mascara: np.ndarray) -> list:
-    """Devuelve un rectángulo rotado (cv2.minAreaRect) por cada individuo detectado."""
+    """Devuelve un rectángulo rotado (cv2.minAreaRect) por cada individuo detectado.
+
+    Los umbrales de área se calculan como fracción del total de píxeles de la
+    imagen (no como valores fijos), para que sigan siendo válidos si cambia la
+    resolución de entrada (p. ej. fotos de celular en vez de las de AutoFish).
+    """
+    area_total = mascara.shape[0] * mascara.shape[1]
+    area_min = MIN_CONTOUR_AREA_FRAC * area_total
+    area_max = MAX_CONTOUR_AREA_FRAC * area_total
+
     contornos, _ = cv2.findContours(mascara, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     rects = []
     for contorno in contornos:
         area = cv2.contourArea(contorno)
-        if area < MIN_CONTOUR_AREA or area > MAX_CONTOUR_AREA:
+        if area < area_min or area > area_max:
             continue
         rects.append(cv2.minAreaRect(contorno))
 
