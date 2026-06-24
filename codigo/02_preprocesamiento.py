@@ -13,7 +13,7 @@ MORPHOLOGY_KERNEL_SIZE = (21, 21)
 BORDE_MUESTRA_PX = 30
 
 # AutoFish fotografía una sección de 100x100 cm de la cinta con una imagen de
-# 2464x2056 px (no cuadrada), así que la escala cm/píxel es distinta por eje.
+# 2464x2056 px escala cm/píxel es distinta por eje.
 ESCALA_CM_X = 100 / 2464
 ESCALA_CM_Y = 100 / 2056
 

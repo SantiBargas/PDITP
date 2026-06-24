@@ -3,7 +3,7 @@
 import numpy as np
 
 # AutoFish fotografía una sección de 100x100 cm de la cinta con una imagen de
-# 2464x2056 px (no cuadrada). El recorte rectificado ya perdió la orientación
+# 2464x2056 px. El recorte rectificado ya perdió la orientación
 # original (dx, dy) respecto de la imagen, así que se usa el promedio de la
 # escala cm/píxel de ambos ejes como aproximación.
 ESCALA_CM_PROMEDIO = (100 / 2464 + 100 / 2056) / 2
