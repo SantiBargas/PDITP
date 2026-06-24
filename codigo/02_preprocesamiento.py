@@ -12,6 +12,18 @@ MAX_CONTOUR_AREA_FRAC = 150_000 / (2464 * 2056)   # ~2.961% del área total de l
 MORPHOLOGY_KERNEL_SIZE = (21, 21)
 BORDE_MUESTRA_PX = 30
 
+# AutoFish fotografía una sección de 100x100 cm de la cinta con una imagen de
+# 2464x2056 px (no cuadrada), así que la escala cm/píxel es distinta por eje.
+ESCALA_CM_X = 100 / 2464
+ESCALA_CM_Y = 100 / 2056
+
+
+def _longitud_cm(p1: np.ndarray, p2: np.ndarray) -> float:
+    """Distancia entre dos puntos de la imagen, en cm, respetando la escala de cada eje."""
+    dx = (float(p1[0]) - float(p2[0])) * ESCALA_CM_X
+    dy = (float(p1[1]) - float(p2[1])) * ESCALA_CM_Y
+    return (dx ** 2 + dy ** 2) ** 0.5
+
 
 def _color_fondo(imagen: np.ndarray) -> np.ndarray:
     """Estima el color de fondo muestreando el borde de la imagen (BGR)."""
@@ -73,7 +85,7 @@ def dibujar_rects(imagen: np.ndarray, rects: list) -> np.ndarray:
     resultado = imagen.copy()
     for rect in rects:
         box = np.intp(cv2.boxPoints(rect))
-        largo = max(np.linalg.norm(box[0]-box[1], 2), np.linalg.norm(box[0]-box[2], 2)) * (100/2048) #cm/pixel        
+        largo = max(_longitud_cm(box[0], box[1]), _longitud_cm(box[0], box[2]))
         cv2.putText(resultado, 
             f"{largo:2.2f}cm", 
             (int(rect[0][0]), int(rect[0][1])),

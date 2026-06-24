@@ -49,7 +49,7 @@ def generar_dataset() -> None:
 
 
 def entrenar(
-    epochs: int = 50,     # cantidad máxima de pasadas completas sobre el dataset de train
+    epochs: int = 40,     # cantidad máxima de pasadas completas sobre el dataset de train (40 y no 50: a partir de la época ~41 la GPU de esta máquina se queda sin memoria)
     patience: int = 10,   # si pasan estas épocas sin mejorar val, corta antes (early stopping)
     imgsz: int = 224,     # tamaño (px) al que se redimensiona cada imagen antes de entrar a la red
     batch: int = 64,      # cantidad de imágenes que se procesan juntas en cada paso
