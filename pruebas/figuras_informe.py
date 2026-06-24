@@ -28,7 +28,7 @@ def _bgr_a_rgb(imagen: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(imagen, cv2.COLOR_BGR2RGB)
 
 
-def figura_pipeline(group_id: int = 25, image_id: int = 1) -> None:
+def figura_pipeline(group_id: int = 25, image_id: int = 1, n_crops: int = 6) -> None:
     """Figura paso a paso: imagen original -> máscara -> individuos detectados -> recortes rectificados."""
     anotaciones = entrada.cargar_anotaciones()
     imagen, info = entrada.cargar_imagen(group_id, image_id, anotaciones)
@@ -42,9 +42,15 @@ def figura_pipeline(group_id: int = 25, image_id: int = 1) -> None:
         mostrar=False, guardar=False, verbose=False, anotaciones=anotaciones,
     )
 
-    n_crops = min(3, len(resultados))
-    cols = max(3, n_crops)
-    fig, axes = plt.subplots(2, cols, figsize=(4 * cols, 8))
+    cols = 3
+    n_crops = min(n_crops, len(resultados))
+    filas_crops = max(1, (n_crops + cols - 1) // cols)
+    alto_fila_crop = 2.2  # los recortes son tiras finas, no necesitan tanto alto como la fila 1
+    fig, axes = plt.subplots(
+        1 + filas_crops, cols,
+        figsize=(4 * cols, 4 + alto_fila_crop * filas_crops),
+        gridspec_kw={"height_ratios": [4] + [alto_fila_crop] * filas_crops},
+    )
 
     axes[0, 0].imshow(_bgr_a_rgb(imagen))
     axes[0, 0].set_title("1. Imagen original")
@@ -57,8 +63,9 @@ def figura_pipeline(group_id: int = 25, image_id: int = 1) -> None:
 
     for i in range(n_crops):
         crop, pez = resultados[i]
-        axes[1, i].imshow(_bgr_a_rgb(crop))
-        axes[1, i].set_title(f"4. Rectificado: {pez['especie']}")
+        fila, col = divmod(i, cols)
+        axes[1 + fila, col].imshow(_bgr_a_rgb(crop))
+        axes[1 + fila, col].set_title(f"4. Rectificado: {pez['especie']}")
 
     for ax in axes.flat:
         ax.axis("off")
