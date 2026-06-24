@@ -8,7 +8,7 @@ import numpy as np
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 MIN_CONTOUR_AREA_FRAC = 10_000 / (2464 * 2056)    # ~0.197% del área total de la imagen
-MAX_CONTOUR_AREA_FRAC = 150_000 / (2464 * 2056)   # ~2.961% del área total de la imagen
+MAX_CONTOUR_AREA_FRAC = 300_000 / (2464 * 2056)   # ~5.922% del área total de la imagen (el pez mas grande del dataset mide 282.877px; sin solapamiento los peces no se tocan, asi que un area grande es un pez grande, no una fusion)
 MORPHOLOGY_KERNEL_SIZE = (21, 21)
 BORDE_MUESTRA_PX = 30
 
