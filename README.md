@@ -28,4 +28,5 @@ cd pruebas
 python test_unitario.py
 ```
 
+Ejemplo:
 ![Test](test_01.png)
