@@ -30,4 +30,4 @@ python test_unitario.py
 
 Ejemplo:
 
-![TEST](test_01.png)
+![TEST](test_img.png)
