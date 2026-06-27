@@ -153,6 +153,29 @@ def dibujar_rects(imagen: np.ndarray, rects: list, clasificaciones: list | None 
     return resultado
 
 
+def dibujar_leyenda(imagen: np.ndarray, colores: dict) -> np.ndarray:
+    """Dibuja una leyenda de clases presentes con su color correspondiente."""
+    resultado = imagen.copy()
+    x, y = 10, 40
+    alto_linea = 30
+
+    for nombre, color in colores.items():
+        cv2.rectangle(resultado, (x - 5, y - 20), (x + 25, y + 5), color, -1)
+        cv2.putText(
+            resultado,
+            nombre,
+            (x + 35, y),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.8,
+            (255, 255, 255),
+            2,
+            cv2.LINE_AA,
+        )
+        y += alto_linea
+
+    return resultado
+
+
 def obtener_clasificaciones(imagen: np.ndarray, rects: list) -> tuple[list, list]:
     """Clasifica todos los rectángulos y devuelve las etiquetas y los nombres presentes."""
     clasificaciones = []
@@ -190,54 +213,51 @@ def run(path_img, mostrar: bool = True) -> tuple:
 
     if mostrar:
         bboxes = dibujar_rects(imagen, rects, clasificaciones, colores)
-
-        coords = {"x": 0, "y": 0}
-
-        def actualizar_mouse(event, x, y, flags, param):
-            coords["x"], coords["y"] = x, y
+        bboxes = dibujar_leyenda(bboxes, colores)
 
         cv2.namedWindow("Mascara", cv2.WINDOW_NORMAL)
         cv2.namedWindow("Individuos detectados", cv2.WINDOW_NORMAL)
         cv2.resizeWindow("Mascara", 800, 600)
         cv2.resizeWindow("Individuos detectados", 800, 600)
-        cv2.setMouseCallback("Individuos detectados", actualizar_mouse)
 
+        print("Procesamiento completado. Presione 'q' para cerrar las ventanas de visualización.")
         while True:
-            frame = bboxes.copy()
-            texto = f"x={coords['x']}, y={coords['y']}"
-            cv2.putText(
-                frame, texto, (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 3
-            )
-
             cv2.imshow("Mascara", mascara)
-            cv2.imshow("Individuos detectados", frame)
+            cv2.imshow("Individuos detectados", bboxes)
 
-            if cv2.waitKey(30) != -1:
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord("q"):
                 break
-            if cv2.getWindowProperty("Individuos detectados", cv2.WND_PROP_VISIBLE) < 1:
-                break
-
+        
         cv2.destroyAllWindows()
 
     return imagen, rects
 
 
 def main():
-    ruta_imagen = input("Ingrese la ruta de la imagen: ").strip().strip('"').strip("'")
+    ruta_imagen = input("Ingrese la ruta de la imagen dentro de PDI_TP/data/: ").strip().strip('"').strip("'")
     if not ruta_imagen:
         print("No se ingresó una ruta válida.")
         return
 
     if not os.path.isabs(ruta_imagen):
-        ruta_imagen = os.path.join(os.getcwd(), ruta_imagen)
+        ruta_pruebas = os.path.dirname(os.path.abspath(__file__))
+        ruta_proyecto = os.path.abspath(os.path.join(ruta_pruebas, ".."))
+        ruta_data = os.path.join(ruta_proyecto, "data")
+        ruta_imagen = os.path.join(ruta_data, ruta_imagen)
 
     imagen = cv2.imread(ruta_imagen)
     if imagen is None:
         print("No se pudo cargar la imagen.")
         return
 
-    run(path_img=ruta_imagen, mostrar=True) 
+    run(path_img=ruta_imagen, mostrar=True)
+
 
 
 if __name__ == "__main__":
-    main()
+    while True:
+        main()
+        continuar = input("¿Desea procesar otra imagen? (s/n): ").strip().lower()
+        if continuar != "s":
+            break
