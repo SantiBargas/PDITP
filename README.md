@@ -27,3 +27,5 @@ Para las pruebas de una imagen:
 cd pruebas
 python test_unitario.py
 ```
+
+![Test](test_01.png)
