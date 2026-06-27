@@ -16,7 +16,14 @@ data/raw/
 
 ## Cómo ejecutar
 
+Para el entrenamiento:
 ```bash
 cd codigo
 python main.py
+```
+
+Para las pruebas de una imagen:
+```bash
+cd pruebas
+python test_unitario.py
 ```
